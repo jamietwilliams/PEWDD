@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from random import randint
 import matplotlib.lines as mlines
-plt.rc('font', family='Times New Roman', size='22')
+plt.rc('font', family='Times New Roman', size='25')
 plt.rc('xtick', labelsize='small')
 plt.rc('ytick', labelsize='small') #graph properties
 
@@ -80,8 +80,8 @@ def element_database(dataframe, element):
         If you want steady-state accretion rate for Si, pass element="Si" and select third returned list
     """
     
-    number_abundance = dataframe["["+element+"/Hx]"].values.tolist()
-    number_abundance_error = dataframe["["+element+"/Hx]e"].values.tolist()
+    number_abundance = dataframe["log("+element+"/H(e))"].values.tolist()
+    number_abundance_error = dataframe["log("+element+"/H(e))e"].values.tolist()
     accretion_rate_steady = dataframe["Acc_rate_"+element+"_steady_state"].values.tolist()
     if "Acc_rate_"+element+"_increasing" in dataframe.columns:
         accretion_rate_in = dataframe["Acc_rate_"+element+"_increasing"].values.tolist()
@@ -361,7 +361,7 @@ def mass_fraction_pie_chart(dataframe, wds, layout, trace_limit=0.05, SS_objects
                 pie_metal.append(0)
                 element_list[j] = ''
                 
-        element_list.append("Other") #makes labels
+        #element_list.append("Other") #makes labels
         pie_metal.append(trace_element_mass)
                 
         pie_metal_fraction = np.array(pie_metal)/total_metal_mass #makes sure fraction adds to one -- may not be needed anymore? Should check
@@ -445,7 +445,7 @@ def number_abundance_func(dataframe, reference_element, x_axis_element, y_axis_e
                         include_column=None, include_values=None,
                         remove_poorly_defined=False, remove_double_arrows = False,
                         point_color='black', errors=True, symbol=".",
-                        tracks=False, time_step=1, step_number=5):
+                        tracks=False, step_number=5):
     
     """
     Constructs single number abundance plot of the ratio of elements
@@ -468,8 +468,7 @@ def number_abundance_func(dataframe, reference_element, x_axis_element, y_axis_e
         symbol: symbol used on plot (string)
         errors: whether you want to plot errors (Boolean)
         tracks: whether you want tracks showing evolution of composition over time (Boolean)
-        time_step: time interval between each point in Myrs (integer)
-        step_number: number of points in track (integer)
+        step_number: number of points in track in units of sinking timescale (integer)
     Outputs:
         number abundance plot
         
@@ -547,7 +546,7 @@ def number_abundance_func(dataframe, reference_element, x_axis_element, y_axis_e
     upper_limit_left, upper_limit_up_right, upper_limit_down = np.delete(upper_limit_left, pop_list), np.delete(upper_limit_up_right, pop_list), np.delete(upper_limit_down, pop_list)
     
     if tracks == True:
-        time_step_s = time_step * 10**6 * 365.25 * 24 * 60 * 60
+        time_step_s = sink_ref
         
         track_ref = np.exp((time_step_s/sink_ref))
         track_x = np.exp((time_step_s/sink_x))
@@ -559,6 +558,7 @@ def number_abundance_func(dataframe, reference_element, x_axis_element, y_axis_e
         for i in range(step_number):
             total_step_x.append(np.log10(number_abundance_x_unlogged*((track_x)/track_ref)**i))
             total_step_y.append(np.log10(number_abundance_y_unlogged*((track_y)/track_ref)**i))
+            
         plt.plot(total_step_x, total_step_y, color=point_color)
         plt.scatter(total_step_x, total_step_y, color=point_color, marker=symbol, s=50)
     
@@ -575,9 +575,9 @@ def number_abundance_plot(dataframe, reference_element, x_axis_element, y_axis_e
                          include_column, include_values=None,
                          remove_poorly_defined=False, remove_double_arrows = False,
                          point_colors="standard", point_symbols="standard", errors=True,
-                         tracks=False, time_steps=1, step_number=5, legend=True,
+                         tracks=False, step_number=5, legend=True,
                          plot_meteorite=False, meteorite_fileloc='/home/jamie/WD_database/meteorite',
-                         meteorite_classes="all"):
+                         meteorite_classes="all", ax=None):
     
     """
     Constructs number abundance plot of the ratio of elements
@@ -619,6 +619,10 @@ def number_abundance_plot(dataframe, reference_element, x_axis_element, y_axis_e
         plot_meteorite=True)
     """
     
+    dataframe = include_dataframe(dataframe, include_column, include_values) #only selects wd from database
+    
+    wds_included = dataframe["Star"].values.tolist()
+    
     if point_colors == "standard":
         colors = []
         for i in range(len(include_column)):
@@ -631,25 +635,28 @@ def number_abundance_plot(dataframe, reference_element, x_axis_element, y_axis_e
     else:
         symbols = point_symbols
         
-    step_number = step_number + 1
-        
-    ax = plt.figure(figsize=(10,8))
-    ax = plt.subplot(1,1,1)
+    #step_number = step_number + 1
+      
+    if ax==None:
+        ax = plt.figure(figsize=(10,8))
+        ax = plt.subplot(1,1,1)
     
     for j, val in enumerate(include_values):
         number_abundance_func(dataframe, reference_element, x_axis_element, y_axis_element,
-                                  include_column=include_column, include_values=[val],
+                                  include_column=include_column, include_values=[val], remove_double_arrows = remove_double_arrows,
                                   remove_poorly_defined = remove_poorly_defined, point_color=colors[j], errors=errors, symbol=symbols[j],
-                                  tracks=tracks, time_step=time_steps, step_number=step_number) #for each inclusion, plots a graph with a different colour
+                                  tracks=tracks, step_number=step_number) #for each inclusion, plots a graph with a different colour
     
     if legend == True:
         legend_list = []
         total_patch = []
-        for ls in include_values:
-            for lab in ls:
-                legend_list.append(lab)
+        for ls in wds_included:
+            ls = ls.split('(')[0]
+            print(ls)
+            #for lab in ls:
+            legend_list.append(ls)
         for i in range(len(include_values)):
-            total_patch.append(mlines.Line2D([], [], color=colors[i], linewidth=0, marker=symbols[i], label=include_values[i], markersize=10))
+            total_patch.append(mlines.Line2D([], [], color=colors[i], linewidth=0, marker=symbols[i], label=legend_list[i], markersize=10))
             
         ax.legend(handles=total_patch, fontsize=18) #plots legend with correct symbols and colors
         
