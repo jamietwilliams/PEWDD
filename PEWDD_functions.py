@@ -483,9 +483,9 @@ def number_abundance_func(dataframe, reference_element, x_axis_element, y_axis_e
     num_y, num_y_err, acc_steady_y, acc_inc_y, acc_dec_y, sink_y = element_database(dataframe, y_axis_element)
     ele_dict = element_dictionary() #gets all element data from dataframe
     
-    acc_steady_ref, acc_steady_x, acc_steady_y = np.array(acc_steady_ref).astype(np.float), np.array(acc_steady_x).astype(np.float), np.array(acc_steady_y).astype(np.float)
-    num_ref_err, num_x_err, num_y_err = np.array(num_ref_err).astype(np.float), np.array(num_x_err).astype(np.float), np.array(num_y_err).astype(np.float)
-    sink_ref, sink_x, sink_y = np.array(sink_ref).astype(np.float), np.array(sink_x).astype(np.float), np.array(sink_y).astype(np.float)
+    acc_steady_ref, acc_steady_x, acc_steady_y = np.array(acc_steady_ref).astype(float), np.array(acc_steady_x).astype(float), np.array(acc_steady_y).astype(float)
+    num_ref_err, num_x_err, num_y_err = np.array(num_ref_err).astype(float), np.array(num_x_err).astype(float), np.array(num_y_err).astype(float)
+    sink_ref, sink_x, sink_y = np.array(sink_ref).astype(float), np.array(sink_x).astype(float), np.array(sink_y).astype(float)
     
     ref_nan, x_nan, y_nan = np.isfinite(acc_steady_ref), np.isfinite(acc_steady_x), np.isfinite(acc_steady_y)
     full_nan = ref_nan & x_nan & y_nan
@@ -594,9 +594,8 @@ def number_abundance_plot(dataframe, reference_element, x_axis_element, y_axis_e
         point_colors: color of points on plot (list)
         point_symbols: symbols used on plot (list)
         error_list: whether you want to plot errors for (Boolean)
-        track_list: whether you want to plot tracks for (Boolean list)
-        time_step_list: the time steps of tracking (integer)
-        step_number_list: number of steps of tracking (integer)
+        tracks: whether you want to plot tracks for (Boolean)
+        step_number: number of steps of tracking (integer)
         legend: include a legend or not (Boolean)
         plot_meteorite: whether to plot Solar System objects
         meteorite_fileloc: file location of meteorite .csv files
